@@ -10,6 +10,7 @@ import sqlite3
 from sqlite3 import Error
 from time import gmtime, strftime
 import re
+from database import Database
 
 dotenv_path = Path('.env')
 load_dotenv(dotenv_path=dotenv_path)
@@ -17,85 +18,51 @@ load_dotenv(dotenv_path=dotenv_path)
 APP_ID = os.getenv('TWITCH_CLIENT_ID')
 APP_SECRET = os.getenv('TWITCH_SECRET')
 USER_SCOPE = [AuthScope.CHAT_READ]
-TARGET_CHANNEL = 'ruetoo'
+TARGET_CHANNEL = os.getenv('TARGET_CHANNEL')
+
+db = Database()
 
 garf_regex = r'\.*garf\.*'
 jiggler_regex = r'\.*jiggl\.*'
 
-def create_connection(db_file):
-    """ create a database connection to the SQLite database
-        specified by db_file
-    :param db_file: database file
-    :return: Connection object or None
-    """
-    try:
-        global conn 
-        conn = sqlite3.connect(db_file, check_same_thread=False)
-        print('DB Connection success')
-    except Error as e:
-        print(e)
-
-def main():
-    database = '../db/database'
-    create_connection(database)
-
 def get_current_time():
     return strftime("%Y-%m-%d %H:%M:%S", gmtime())
 
-def make_user_if_not_exists(username):
-    if conn is not None:
-        cur = conn.cursor()
-        cur.execute("SELECT * FROM user WHERE name = ?", (username,))
+def add_user(username):
+    query = '''
+        INSERT INTO user(name) VALUES(?);
+        '''
+    db.execute(query, values=(username,))
 
-        result = cur.fetchall()
-
-        if len(result) == 0:
-            sql = '''INSERT INTO user(name) VALUES (?)'''
-            cur = conn.cursor()
-            cur.execute(sql, (username, ))
-            conn.commit()
-    else:
-        print("Error! cannot create the database connection.")
-    
 def get_user_id(username):
-    if conn is not None:
-        cur = conn.cursor()
-        cur.execute("SELECT id FROM user WHERE name = ?", (username, ))
-        
-        result = cur.fetchall()
-        
-        return result[0][0]
-
+    query = '''SELECT * FROM user WHERE name = ?;'''
+    result = db.execute(query, values=(username, ), fetch=True)
+    
+    # In case user doesnt exist
+    if len(result) == 0:
+        add_user(username)
+        return get_user_id(username)
+    
+    return result[0][0]
+    
 def add_jiggler(username):
-    if conn is not None:
-        make_user_if_not_exists(username)
-        id = get_user_id(username)
-        print(id, username)
-        
-        sql = '''INSERT INTO message(jiggle, date, user_id) VALUES (?, ?, ?)'''
+    id = get_user_id(username)
 
-        cur = conn.cursor()
-        cur.execute(sql, (1, get_current_time(), id))
-        conn.commit()
+    query = '''
+        INSERT INTO message(jiggle, date, user_id) VALUES (?, ?, ?)
+    '''
 
-    else:
-        print("Error! cannot create the database connection.")
+    db.execute(query, values=(1, get_current_time(), id))
 
 def add_garfer(username):
-    if conn is not None:
-        make_user_if_not_exists(username)
-        id = get_user_id(username)
-        print(id, username)
-        
-        sql = '''INSERT INTO message(jiggle, date, user_id) VALUES (?, ?, ?)'''
+    id = get_user_id(username)
 
-        cur = conn.cursor()
-        cur.execute(sql, (0, get_current_time(), id))
-        conn.commit()
+    query = '''
+        INSERT INTO message(jiggle, date, user_id) VALUES (?, ?, ?)
+    '''
 
+    db.execute(query, values=(0, get_current_time(), id))
 
-    else:
-        print("Error! cannot create the database connection.")
 
 
 # this will be called when the event READY is triggered, which will be on bot start
@@ -147,11 +114,6 @@ async def run():
         # now we can close the chat bot and the twitch api client
         chat.stop()
         await twitch.close()
-
-
-
-if __name__ == '__main__':
-    main()
 
 # lets run our setup
 asyncio.run(run())
