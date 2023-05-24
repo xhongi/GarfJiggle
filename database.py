@@ -48,6 +48,34 @@ class Database:
             '''
         self.execute(query, values=(username,))
 
+    def select_jiggle_ranking(self):
+        query = '''
+            SELECT user.name, COUNT(*) AS count
+            FROM message INNER JOIN user
+            ON user.id = message.user_id
+            WHERE message.jiggle = 1
+            GROUP BY message.user_id
+            ORDER BY 2 DESC
+            LIMIT 10;'''
+
+        result = self.execute(query, fetch=True)
+
+        return result
+
+    def select_garf_ranking(self):
+        query = '''
+            SELECT user.name, COUNT(*) AS count
+            FROM message INNER JOIN user
+            ON user.id = message.user_id
+            WHERE message.jiggle = 0
+            GROUP BY message.user_id
+            ORDER BY 2 DESC
+            LIMIT 10;'''
+
+        result = self.execute(query, fetch=True)
+        
+        return result
+
     def get_user_id(self, username):
         query = '''SELECT * FROM user WHERE name = ?;'''
         result = self.execute(query, values=(username, ), fetch=True)
