@@ -37,6 +37,8 @@ async def on_message(msg: ChatMessage):
     if re.search(jiggler_regex, msg.text, flags=re.IGNORECASE):
         print(f'Jiggler detected: {user}')
         db.add_jiggler(user)
+        return # user shouldnt be able to be garfer and jiggler at the same time
+
     if re.search(garf_regex, msg.text, flags=re.IGNORECASE):
         print(f'Garfer detected: {user}')
         db.add_garfer(user)
