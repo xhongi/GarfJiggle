@@ -39,7 +39,7 @@ class Database:
         except Error as e:
             print(e)
     
-    def get_current_time():
+    def get_current_time(self):
         return strftime("%Y-%m-%d %H:%M:%S", gmtime())
 
     def add_user(self, username):
@@ -50,7 +50,7 @@ class Database:
 
     def get_user_id(self, username):
         query = '''SELECT * FROM user WHERE name = ?;'''
-        result = db.execute(query, values=(username, ), fetch=True)
+        result = self.execute(query, values=(username, ), fetch=True)
 
         # In case user doesnt exist
         if len(result) == 0:
