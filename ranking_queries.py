@@ -17,6 +17,8 @@ def select_garf_ranking():
     for i, row in enumerate(result):
         print(f'{i+1}. {row[0]} - {row[1]}')
 
+    return result
+
 def select_jiggle_ranking():
     query = '''
         SELECT user.name, COUNT(*) AS count
@@ -31,6 +33,8 @@ def select_jiggle_ranking():
 
     for i, row in enumerate(result):
         print(f'{i+1}. {row[0]} - {row[1]}')
+    
+    return result
 
 print("TOP 10 JIGGLERS")
 select_jiggle_ranking()
