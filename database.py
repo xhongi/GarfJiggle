@@ -73,8 +73,24 @@ class Database:
             LIMIT 10;'''
 
         result = self.execute(query, fetch=True)
-        
+
         return result
+
+    def get_jiggle_count(self, user_id):
+        query = '''
+            SELECT COUNT(*) AS jiggles
+            FROM message
+            WHERE message.user_id = ? AND message.jiggle = 1;
+        '''
+        return self.execute(query, values=(user_id,), fetch=True)
+    
+    def get_garf_count(self, user_id):
+        query = '''
+            SELECT COUNT(*) AS garfs
+            FROM message
+            WHERE message.user_id = ? AND message.jiggle = 0;
+        '''
+        return self.execute(query, values=(user_id,), fetch=True)
 
     def get_user_id(self, username):
         query = '''SELECT * FROM user WHERE name = ?;'''
