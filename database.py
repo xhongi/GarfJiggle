@@ -1,5 +1,6 @@
 import sqlite3
 from sqlite3 import Error
+from time import gmtime, strftime
 
 class Database:
     def __init__(self):
@@ -37,4 +38,41 @@ class Database:
                 return cur.fetchall()
         except Error as e:
             print(e)
-        
+    
+    def get_current_time():
+        return strftime("%Y-%m-%d %H:%M:%S", gmtime())
+
+    def add_user(self, username):
+        query = '''
+            INSERT INTO user(name) VALUES(?);
+            '''
+        self.execute(query, values=(username,))
+
+    def get_user_id(self, username):
+        query = '''SELECT * FROM user WHERE name = ?;'''
+        result = db.execute(query, values=(username, ), fetch=True)
+
+        # In case user doesnt exist
+        if len(result) == 0:
+            self.add_user(username)
+            return self.get_user_id(username)
+
+        return result[0][0]
+
+    def add_jiggler(self, username):
+        id = self.get_user_id(username)
+
+        query = '''
+            INSERT INTO message(jiggle, date, user_id) VALUES (?, ?, ?)
+        '''
+
+        self.execute(query, values=(1, self.get_current_time(), id))
+
+    def add_garfer(self, username):
+        id = self.get_user_id(username)
+
+        query = '''
+            INSERT INTO message(jiggle, date, user_id) VALUES (?, ?, ?)
+        '''
+
+        self.execute(query, values=(0, self.get_current_time(), id))

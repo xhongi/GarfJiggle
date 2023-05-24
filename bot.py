@@ -6,9 +6,6 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 import asyncio
-import sqlite3
-from sqlite3 import Error
-from time import gmtime, strftime
 import re
 from database import Database
 
@@ -25,46 +22,6 @@ db = Database()
 garf_regex = r'\.*garf\.*'
 jiggler_regex = r'\.*jiggl\.*'
 
-def get_current_time():
-    return strftime("%Y-%m-%d %H:%M:%S", gmtime())
-
-def add_user(username):
-    query = '''
-        INSERT INTO user(name) VALUES(?);
-        '''
-    db.execute(query, values=(username,))
-
-def get_user_id(username):
-    query = '''SELECT * FROM user WHERE name = ?;'''
-    result = db.execute(query, values=(username, ), fetch=True)
-    
-    # In case user doesnt exist
-    if len(result) == 0:
-        add_user(username)
-        return get_user_id(username)
-    
-    return result[0][0]
-    
-def add_jiggler(username):
-    id = get_user_id(username)
-
-    query = '''
-        INSERT INTO message(jiggle, date, user_id) VALUES (?, ?, ?)
-    '''
-
-    db.execute(query, values=(1, get_current_time(), id))
-
-def add_garfer(username):
-    id = get_user_id(username)
-
-    query = '''
-        INSERT INTO message(jiggle, date, user_id) VALUES (?, ?, ?)
-    '''
-
-    db.execute(query, values=(0, get_current_time(), id))
-
-
-
 # this will be called when the event READY is triggered, which will be on bot start
 async def on_ready(ready_event: EventData):
     print('Bot is ready for work, joining channels')
@@ -79,10 +36,10 @@ async def on_message(msg: ChatMessage):
     user = msg.user.name
     if re.search(jiggler_regex, msg.text, flags=re.IGNORECASE):
         print(f'Jiggler detected: {user}')
-        add_jiggler(user)
+        db.add_jiggler(user)
     if re.search(garf_regex, msg.text, flags=re.IGNORECASE):
         print(f'Garfer detected: {user}')
-        add_garfer(user)
+        db.add_garfer(user)
 
 # this is where we set up the bot
 async def run():
